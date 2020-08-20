@@ -165,27 +165,35 @@ def open_video_and_get_properties(self, video_path):
 
 
 def get_mouse_silhouette(coordinates, frame_num, model_mouse_mask_initial, scale = 16):
-    '''     extract DLC coordinates and make a model mouse mask     '''
+    '''     extract DLC coordinates and make a model mouse mask
+            -- this can be done with only 3 clicked points, using interpolation and locate_body_parts.py;
+               I also have a more realistic version for my 13 clicked points
+    '''
     # extract coordinates
     body_angle = coordinates['body_angle'][frame_num]
     head_angle = coordinates['head_angle'][frame_num]
+    if head_angle < -90 and body_angle > 90: head_angle = head_angle + 360
+    if body_angle < -90 and head_angle > 90: body_angle = body_angle + 360
     body_head_angle = (body_angle * 2 + head_angle * 1) / 3
-    head_body_angle = (body_angle * 1 + head_angle * 2) / 3
+    head_body_angle = (body_angle * 1 + head_angle * 3) / 4
+    butt_location = tuple(coordinates['butt_location'][:, frame_num].astype(np.uint16))
     body_location = tuple(coordinates['center_body_location'][:, frame_num].astype(np.uint16))
-    head_location = tuple(coordinates['neck_location'][:, frame_num].astype(np.uint16))
-    body_head_location = tuple(((np.array(body_location) * 2 + np.array(head_location) * 1) / 3).astype(int))
-    head_body_location = tuple(((np.array(body_location) * 1 + np.array(head_location) * 2) / 3).astype(int))
-
+    head_location = tuple(coordinates['head_location'][:, frame_num].astype(np.uint16))
+    body_head_location = tuple(((np.array(body_location) * 1 + np.array(head_location) * 1) / 2).astype(int))
+    head_body_location = tuple(((np.array(body_location) * 1 + np.array(head_location) * 3) / 4).astype(int))
+    butt_body_location = tuple(((np.array(body_head_location) * 1 + np.array(butt_location) * 1) / 2).astype(int))
 
     # draw ellipses representing model mouse
-    mouse_silhouette = cv2.ellipse(model_mouse_mask_initial.copy(), body_location, (int(scale * .9), int(scale * .5)), 180 - body_angle, 0, 360, 100, thickness=-1)
-    mouse_silhouette = cv2.ellipse(mouse_silhouette, body_head_location, (int(scale * .5), int(scale * .33)), 180 - body_head_angle, 0, 360, 100, thickness=-1)
-    mouse_silhouette = cv2.ellipse(mouse_silhouette, head_body_location, (int(scale * .7), int(scale * .35)), 180 - head_body_angle, 0, 360, 100, thickness=-1)
-    mouse_silhouette = cv2.ellipse(mouse_silhouette, head_location, (int(scale * .6), int(scale * .3)), 180 - head_angle, 0, 360, 100, thickness=-1)
+    mouse_silhouette = cv2.ellipse(model_mouse_mask_initial.copy(), butt_location, (int(scale * .7), int(scale * .5)), 180 - body_angle, 0, 360, 100, thickness=-1)
+    mouse_silhouette = cv2.ellipse(mouse_silhouette, butt_body_location, (int(scale * .6), int(scale * .45)), 180 - body_angle, 0, 360, 100, thickness=-1)
+    mouse_silhouette = cv2.ellipse(mouse_silhouette, body_head_location, (int(scale * .8), int(scale * .42)), 180 - body_head_angle, 0, 360, 100, thickness=-1)
+    mouse_silhouette = cv2.ellipse(mouse_silhouette, head_body_location, (int(scale * .6), int(scale * .35)), 180 - head_body_angle, 0, 360, 100, thickness=-1)
+    mouse_silhouette = cv2.ellipse(mouse_silhouette, head_location, (int(scale * .6), int(scale * .25)), 180 - head_angle, 0, 360, 100, thickness=-1)
 
     # make a single large ellipse used to determine when do use the flight_color_dark
     large_ellipse_around_mouse = cv2.ellipse(model_mouse_mask_initial.copy(), body_location, (int(scale * 2.5), int(scale * 1.5)), 180 - body_angle, 0, 360, 100, thickness=-1)
     return mouse_silhouette, large_ellipse_around_mouse, body_location
+
 
 
 
