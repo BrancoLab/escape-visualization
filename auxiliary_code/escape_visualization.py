@@ -18,8 +18,10 @@ def visualize_escape(self, video_path, v):
     # set up multi-trial video
     multi_trial_background_image = arena.copy()
     multi_trial_visualization_clip = set_up_multi_trial_video(self, video_path)
+    # set up start stim end frames
+    self.start_stim_end_frames = [[sf - self.pre_stim_duration*self.fps, sf, sf + self.max_escape_duration*self.fps] for sf in self.stim_frames[v]]
     # loop over each trial
-    for trial, start_stim_end_frame in enumerate(self.start_stim_end_frames[v]):
+    for trial, start_stim_end_frame in enumerate(self.start_stim_end_frames):
         # get frame numbers and fisheye correction and initialize videos
         self.start_frame, self.stim_frame, self.end_frame = start_stim_end_frame[0], start_stim_end_frame[1], start_stim_end_frame[2]
         map1, map2 = load_fisheye_correction(self)
@@ -78,9 +80,12 @@ def visualize_escape(self, video_path, v):
                 cv2.drawContours(multi_trial_visualization_frame, contours, 0, (255, 255, 255), thickness=1, lineType=8)
             # add a looming spot - for actual loom
             if self.show_loom_in_video_clip: frame = show_loom_in_video_clip(frame, frame_num, self, trial_plot, visualization_video_frame)
+            # display visualization, draw points corresponding to each body part
+            if self.show_body_part_dots: show_body_part_dots(self, frame_num, video_path, visualization_video_frame,
+                                                             ['snout_location', 'neck_location', 'center_body_location', 'butt_location'])
+            else: cv2.imshow(video_path + ' visualization', visualization_video_frame)
             # display current frames
             cv2.imshow(video_path + ' clip', frame);
-            cv2.imshow(video_path + ' visualization', visualization_video_frame)
             cv2.imshow(video_path + ' multi-trial visualization', multi_trial_visualization_frame)
             # show as fast as possible; press 'q' to quit
             if cv2.waitKey(1) & 0xFF == ord('q'): break
@@ -117,6 +122,13 @@ def show_loom_in_video_clip(frame, frame_num, self, trial_plot, video_arena):
         cv2.addWeighted(frame, alpha, loom_frame, 1 - alpha, 0, frame)
     return frame
 
+def show_body_part_dots(self, frame_num, video_path, visualization_video_frame, body_parts_list):
+    visualization_video_frame_dots = visualization_video_frame.copy()
+    # loop over selected body parts
+    for body_part in body_parts_list:
+        location = tuple([int(self.coordinates[body_part][0][frame_num]), int(self.coordinates[body_part][1][frame_num])])
+        cv2.circle(visualization_video_frame_dots, location, 3, 0, -1)
+    cv2.imshow(video_path + ' visualization', visualization_video_frame_dots)
 
 def initialize_visualization_vars(arena, self):
     # initialize more quantities
