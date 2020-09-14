@@ -4,6 +4,9 @@
  ### Python environment
  An environment file is included, which can be cloned to match the libraries used when running this code. It could take at least an hour to download all libraries.
  
+ ### Sample data
+ For a sample behaviour video, download this video file (https://www.dropbox.com/s/swpv68mbkcva5h3/escapes%20without%20obstacle.avi?dl=0), and then add it to the Sample Data folder in your local repository. The parameters for this video are the current, default parameters in the setup_parameters.py file. 
+ 
  ### setup_parameters.py
  Parameters and analysis steps to run are found in this file. If libraries are installed correctly, this should run immediately on the sample data. 
  **options.do_DLC_tracking** DeepLabCut tracking. options.dlc_config_file points to the network location. I can provide this trained network if requested. If running the sample data set, just set options.do_DLC_tracking to False to avoid complicated installation issues.
